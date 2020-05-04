@@ -1,0 +1,128 @@
+require(lubridate);require(ggplot2);require(xts);require(dplyr);require(grid);require(cowplot)
+require(plantecophys)# Load Packages
+setwd("D:/WTC4 Data/Dew")
+df<-read.csv(file="CDFWTC4.csv",header=TRUE, sep=",") #Campaign Data Frame WTC4
+######
+df["source"]=-3.28 ##from branch water
+###
+R<-287.05
+Rv<-461.95
+Pr<-101.3
+finr<-0.082058
+##diurnal d18ocond
+##Create Time class (I use Td == Time Date), I also create week and hour etc to explore data
+df["Td"]<-(dmy_hm(df$Td, quiet=TRUE, tz="UTC"));str(df$Td)
+df["hour"]<-format(df$Td,"%H");str(df$hour)
+df["month"]<-format(df$Td,"%m");str(df$month)
+df["md"]<-format(df$Td,"%m%d");str(df$md)
+df["week"]<-strftime(df$Td,format="%W",tz="UTC")
+
+##This equations are a combo of the WTC4 MS, John Drakes GBC Biology and Craigs orginal WTC4 Agmet paper
+####Pref###
+df["Pref"]=((df$AIRPRESS_mean*1000)-df$Vwat_mean)/(R*(df$Tair_al_mean+273))+((df$Vwat_mean)/(Rv*df$Vwat_mean+273))
+####Fin####
+df["fin"]=(df$kfactor_mean*(sqrt(df$DIFFP_mean*(1.2/df$Pref)))*(273/(df$Tair_al_mean+273))*(df$AIRPRESS_mean/Pr))
+###Finmol###
+df["finmol"]=((df$AIRPRESS_mean*0.00986923267)*df$fin)/(finr*(df$Tair_al_mean+273))
+##fout###
+df["fout"]=df$fin*(((df$AIRPRESS_mean)-df$Href_mean)/((df$Tair_al_mean)-df$Href_mean))
+##fout mol
+df["foutmol"]=((df$AIRPRESS_mean*0.00986923267)*df$fout)/(finr*(df$Tair_al_mean+273))
+#uoutwout
+df["uoutwout"]=df$foutmol*df$Vwat_mean
+#uinwin
+df["uinwin"]=df$finmol*df$Fwat_mean
+#condout
+df["condout"]=df$CONDH2O_mean
+##E
+df["E"]=df$uoutwout-df$uinwin+df$condout
+##E-wo
+df["e-wo"]=df$E-df$Vwat_mean
+##d18out
+df["d18out"]=df$d18O.corrected_WV*df$uoutwout
+#d18in
+df["d18in"]=df$d18O.corrected_WV.AMB.*df$uinwin
+##d18c
+df["d18c"]=df$d18O.corrected_Cond*df$condout
+##over e-wo
+df["d18oute"]=df$d18out/df$`e-wo` ;df["d18ine"]=df$d18in/df$`e-wo`; df["d18Ce"]=df$d18c/df$E
+##d trans
+df["dtrans"]=df$d18oute-df$d18ine+df$d18Ce ; mean(df$dtrans, na.rm = TRUE ) ;df$dtrans
+#We need to express mulriple variables on a leaf area basis: 
+df$leafarea[df$chamber=="C01"]<-23.62101328 #M^2
+df$leafarea[df$chamber=="C02"]<- 17.17025483
+df$leafarea[df$chamber=="C03"]<- 12.37672299
+df$leafarea[df$chamber=="C04"]<-24.62392584
+df$leafarea[df$chamber=="C05"]<- 12.92316481
+df$leafarea[df$chamber=="C06"]<-29.71035506
+df$leafarea[df$chamber=="C07"]<- 14.61233375
+df$leafarea[df$chamber=="C08"]<- 24.42841037
+df$leafarea[df$chamber=="C09"]<- 17.33770004
+df$leafarea[df$chamber=="C10"]<- 17.13905693
+df$leafarea[df$chamber=="C11"]<- 9.63132978
+df$leafarea[df$chamber=="C12"]<- 27.27409398
+df$LACM<-df$leafarea / 10000
+#leaf water turnover = W/gt*wi
+#wi is the leaf intercellular vapour concentration (mol water vapour/mol moist air)
+#using Licor eqn  mole fraction of water vapor within the leaf, mmol H2O mol air-1.
+df["Ei"]<-6.13753*exp(df$leaftemp*((18.564-(df$leaftemp/254.4)))/(df$leaftemp+255.57))
+df$wi<-df$Ei / df$AIRPRESS_mean/10  #mol mol -1
+##make E a flux relative to tree lef area
+df$Emmol<-df$E*1000 #go to mmol
+df$Eleaf<-df$Emmol/df$leafarea ; plot(df$Eleaf) #(mmol H2O m-2 s-1)
+
+##Calculate VPD
+df$esat<-esat(TdegC=df$Tair_al_mean, Pa = 101)
+df$vpd<-RHtoVPD(RH=df$RH_al_mean, TdegC=df$Tair_al_mean, Pa = 101) ; plot(df$vpd);summary(df$vpd) #the vapour pressure deficit of the chamber airspace (kPa)
+##Calculate gt -gt is total conductance to water vapour through the stomata and leaf boundary layer
+df$gs<-df$Eleaf/df$vpd/10 # mol
+#####################################
+##Calculate Leaf Water Residence Times##
+df$W<- 12 #mol m-2
+df$t<-df$W/(df$gs*df$wi) # in seconds
+df$tm<-df$t/60 ;mean(df$tm, na.rm=TRUE);min(df$tm, na.rm=TRUE);max(df$tm, na.rm=TRUE) # T in mins
+df$th<-df$t/3600 ;mean(df$th, na.rm=TRUE);min(df$th, na.rm=TRUE);max(df$th, na.rm=TRUE) # T in hour
+###Calculate for isotopes
+df$ek=0.027
+df$alphak<-1+df$ek
+df["Eplus"]<-2.644-(3.206*((10^3)/(df$Tair_al_mean+273.16)))+(1.534*((10^6)/((df$Tair_al_mean+273.16)^2)))
+df$betaplus<-(df$Eplus/1000)+ 1
+mean(df$alphak*df$betaplus)
+df$p<-1.2 ##See SI from MS
+##df$alphak*df$betaplus shold be around 1.040 (Table 1 Grahams and Lucas paper)
+df$tiso<-(df$W*df$alphak*df$betaplus)/(df$p*df$gs*df$wi)
+df$tmiso<-df$tiso/60 ;mean(df$tmiso, na.rm=TRUE);min(df$tmiso, na.rm=TRUE);max(df$tmiso, na.rm=TRUE) # T in mins
+df$thiso<-df$tiso/3600 ;mean(df$thiso, na.rm=TRUE);min(df$thiso, na.rm=TRUE);max(df$thiso, na.rm=TRUE)
+###calculate number obsertavtions of dtrans within 2 mil
+df$range<-ifelse(df$dtrans  >= -5.28 & df$dtrans <= -1.28, "within", "not");df$range<-as.factor(df$range)
+summary(df$range) # 107 not in 264 within = 367 total % witin 2 % is 258 /367
+264/(264+107)
+##get chamber %
+tapply(df$range, df$chamber, summary)
+
+#write.table(df, "clipboard-16384", sep="\t", row.names=FALSE, col.names=TRUE)
+##The following script defines when chamber air temp and chamber dew point temp are within 1C or negative
+#We need to figure out if Dew Point deltas could be influecing gs
+df$dpdiffwtc<-df$Tair_al-df$DewPntC;df$dpdiffwtc
+df$rangewtc<-ifelse(df$dpdiffwtc  >= -1000000 & df$dpdiffwtc<= 1, "not", "within");df$rangewtc<-as.factor(df$rangewtc)
+summary(df$rangewtc) # 80 not in 520 within 
+
+#Count how many data points are comprimised from each treatment
+sub<- df[df$trt == "ambient",] ;summary(sub$rangewtc) # 80 outisde out of 220 ambineto observatins or 36 % 
+subx<- df[df$trt == "elevated ",] ;summary(subx$rangewtc) # 0 
+
+#df <- df[df$rangewtc == "within",]
+#df <- df[df$rangeatm == "within",]
+##If we run teh scirpt with dew point difference we ommit amy values that are less then 1
+
+dfa<-df ##I make dfa to use in the graphs
+df$sun<- ifelse(df$PAR >=0.01, "day", "night")
+dfsun<-filter(df, df$sun == "day")
+dfnight<-filter(df, df$sun == "night")
+#dfsun<-subset(dfsun, Eleaf > 0.3)
+dfsun<-subset(dfsun, dtrans >-8 & dtrans<2) ## rhis just removes a few absurd values
+#Calculate and export daily means 
+dfsunmean<-dfsun[,c("trt","Camp","d18O.corrected_WV","d18O.corrected_WV.AMB.","dtrans" )]
+#count<-na.omit(dfsunmean)
+x<-summaryBy(.~trt+Camp,FUN=c(mean,sd),keep.names=T,data=dfsunmean,na.rm=TRUE);max(dfsun$dtrans,na.rm=TRUE)
+write.table(x, "clipboard-16384", sep="\t", row.names=FALSE) ## this copies a table of mean daytime campaignvalues and SD
