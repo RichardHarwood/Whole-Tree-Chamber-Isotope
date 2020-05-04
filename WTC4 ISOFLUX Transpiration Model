@@ -114,8 +114,6 @@ subx<- df[df$trt == "elevated ",] ;summary(subx$rangewtc) # 0
 #df <- df[df$rangewtc == "within",]
 #df <- df[df$rangeatm == "within",]
 ##If we run teh scirpt with dew point difference we ommit amy values that are less then 1
-
-dfa<-df ##I make dfa to use in the graphs
 df$sun<- ifelse(df$PAR >=0.01, "day", "night")
 dfsun<-filter(df, df$sun == "day")
 dfnight<-filter(df, df$sun == "night")
@@ -125,4 +123,7 @@ dfsun<-subset(dfsun, dtrans >-8 & dtrans<2) ## rhis just removes a few absurd va
 dfsunmean<-dfsun[,c("trt","Camp","d18O.corrected_WV","d18O.corrected_WV.AMB.","dtrans" )]
 #count<-na.omit(dfsunmean)
 x<-summaryBy(.~trt+Camp,FUN=c(mean,sd),keep.names=T,data=dfsunmean,na.rm=TRUE);max(dfsun$dtrans,na.rm=TRUE)
-write.table(x, "clipboard-16384", sep="\t", row.names=FALSE) ## this copies a table of mean daytime campaignvalues and SD
+write.table(x, "clipboard-16384", sep="\t", row.names=FALSE) ## this copies a table of mean daytime campaignvalues
+
+
+dfa<-df ##I make dfa to use in the code which makes Figures 2,3 and 4- These scripts will cal for WTC4 Ispflux model to be run
