@@ -273,7 +273,6 @@ t1<-ggplot(data=data, aes(x=Time, y=Tair_al_mean))+<br>
   geom_errorbar(aes(ymin=Tair_al_mean-Tair_al_mean.1, ymax=Tair_al_mean+Tair_al_mean.1), width=.2,<br>
                 position=position_dodge(.9))+<br>
   labs(y="", x = "",element_text(size = 6))+<br>
-  # scale_x_datetime(breaks = scales::pretty_breaks(n = 12))<br>
   theme_classic()+theme(panel.border = element_rect(fill = "NA", colour = "black", size = 2))+<br>
   ggtitle("")+ theme(legend.position = "none")+<br>
   scale_y_continuous ( breaks=scales::pretty_breaks(n=5),<br>
@@ -293,7 +292,7 @@ t3<-ggplot(data=data2, aes(x=Time, y=Tair_al_mean))+<br>
   geom_errorbar(aes(ymin=Tair_al_mean-Tair_al_mean.1, ymax=Tair_al_mean+Tair_al_mean.1), width=.2,<br>
                 position=position_dodge(.9))+<br>
   labs(y="", x = "",element_text(size = 6))+<br>
-  # scale_x_datetime(breaks = scales::pretty_breaks(n = 12))<br>
+
   theme_classic()+theme(panel.border = element_rect(fill = "NA", colour = "black", size = 2))+<br>
   ggtitle("")+ theme(legend.position = "none")+<br>
   scale_y_continuous ( breaks=scales::pretty_breaks(n=5),<br>
