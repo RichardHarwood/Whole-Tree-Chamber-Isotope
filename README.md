@@ -91,6 +91,5 @@ a<-ggplot(data = d2, aes(x = d, y = m, fill = z, z = z)) +  <br>
   theme(plot.title = element_text(size = 20, face = "bold")) <br>
 
 a
-
-
+![](github%20images/figure 2a github.tiff)
 
