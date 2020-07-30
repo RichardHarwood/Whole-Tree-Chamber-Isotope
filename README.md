@@ -300,8 +300,8 @@ t3<-ggplot(data=data2, aes(x=Time, y=Tair_al_mean))+<br>
   theme(axis.text.y = element_text( color="black", size=25))+<br>
   theme(axis.text.x = element_text( color="black", size=16, angle=45, hjust=1 , vjust=1))<br>
   
-  here is t1 (which stands for temp - campiagn 1)
-  ![](tempeg.png)
+  here is t1 (which stands for temp - campiagn 1)<br>
+  ![](tempeg.png)<br>
   each varible (temp , gs , Eleaf etc has its own script and then they are merged using cowplot::plot_grid) <br>
   figure s4 is slightly different in that it uses facet wrap on the chambers to produce the plots.<br> 
 
