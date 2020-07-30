@@ -89,7 +89,139 @@ a<-ggplot(data = d2, aes(x = d, y = m, fill = z, z = z)) +  <br>
                     xmin=-0.15, xmax=-1,ymin=82.5, ymax=83.5)   + <br>
   guides(fill=guide_colourbar(barwdith=0.5, barheight =18, nbin=100)) + <br>
   theme(plot.title = element_text(size = 20, face = "bold")) <br>
+  
+  Here is the output:
 
 ![](Fig2aeg.png)
+
+This is done for all other panels (d18, temp and VPD, scripts in project)<br>
+
+The next step is plotting the diurnal data from the intensive campaigns. <br>
+FIgures 3,4 and s4 depend on the WTC Transpiration model being run:<br>
+
+googledriveWTC4ISOTOPEIDCAMPAIGNDATA <- "d/10Y5-KjrbqeSaG6b_c6N7dJFGMsXSYqyq"<br>
+df<- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", googledriveWTC4ISOTOPEIDCAMPAIGNDATA))<br>
+setwd("E:/From M.2/WTC4 Data/Dew")<br>
+df<-read.csv(file="CDFWTC4.csv",header=TRUE, sep=",") #Campaign Data Frame WTC4<br>
+######<br>
+df["source"]=-3.28 ##from branch water<br>
+###<br>
+R<-287.05<br>
+Rv<-461.95<br>
+Pr<-101.3<br>
+finr<-0.082058<br>
+##diurnal d18ocond<br>
+##Create Time class (I use Td == Time Date), I also create week and hour etc to explore data<br>
+df["Td"]<-(dmy_hm(df$Td, quiet=TRUE, tz="UTC"));str(df$Td)<br>
+df["hour"]<-format(df$Td,"%H");str(df$hour)<br>
+df["month"]<-format(df$Td,"%m");str(df$month)<br>
+df["md"]<-format(df$Td,"%m%d");str(df$md)<br>
+df["week"]<-strftime(df$Td,format="%W",tz="UTC")<br>
+
+##These equations are a combo of the WTC4 MS, John Drakes GBC Biology and Craigs orginal WTC4 Agmet paper<br>
+####Pref###<br>
+df["Pref"]=((df$AIRPRESS_mean*1000)-df$Vwat_mean)/(R*(df$Tair_al_mean+273))+((df$Vwat_mean)/(Rv*df$Vwat_mean+273))<br>
+####Fin####<br>
+df["fin"]=(df$kfactor_mean*(sqrt(df$DIFFP_mean*(1.2/df$Pref)))*(273/(df$Tair_al_mean+273))*(df$AIRPRESS_mean/Pr))<br>
+###Finmol###<br>
+df["finmol"]=((df$AIRPRESS_mean*0.00986923267)*df$fin)/(finr*(df$Tair_al_mean+273))<br>
+##fout###<br>
+df["fout"]=df$fin*(((df$AIRPRESS_mean)-df$Href_mean)/((df$Tair_al_mean)-df$Href_mean))<br>
+##fout mol<br>
+df["foutmol"]=((df$AIRPRESS_mean*0.00986923267)*df$fout)/(finr*(df$Tair_al_mean+273))<br>
+#uoutwout<br>
+df["uoutwout"]=df$foutmol*df$Vwat_mean<br>
+#uinwin<br>
+df["uinwin"]=df$finmol*df$Fwat_mean<br>
+#condout<br>
+df["condout"]=df$CONDH2O_mean<br>
+##E<br>
+df["E"]=df$uoutwout-df$uinwin+df$condout<br>
+##E-wo<br>
+df["e-wo"]=df$E-df$Vwat_mean<br>
+##d18out<br>
+df["d18out"]=df$d18O.corrected_WV*df$uoutwout<br>
+#d18in<br>
+df["d18in"]=df$d18O.corrected_WV.AMB.*df$uinwin<br>
+##d18c<br>
+df["d18c"]=df$d18O.corrected_Cond*df$condout<br>
+##over e-wo<br>
+df["d18oute"]=df$d18out/df$`e-wo` ;df["d18ine"]=df$d18in/df$`e-wo`; df["d18Ce"]=df$d18c/df$E<br>
+##d trans<br>
+df["dtrans"]=df$d18oute-df$d18ine+df$d18Ce ; mean(df$dtrans, na.rm = TRUE ) ;df$dtrans # this is d18oatm<br>
+
+We need to express on a leaf area basis <br>
+
+df$leafarea[df$chamber=="C01"]<-23.62101328 #M^2<br>
+df$leafarea[df$chamber=="C02"]<- 17.17025483<br>
+df$leafarea[df$chamber=="C03"]<- 12.37672299<br>
+df$leafarea[df$chamber=="C04"]<-24.62392584<br>
+df$leafarea[df$chamber=="C05"]<- 12.92316481<br>
+df$leafarea[df$chamber=="C06"]<-29.71035506<br>
+df$leafarea[df$chamber=="C07"]<- 14.61233375<br>
+df$leafarea[df$chamber=="C08"]<- 24.42841037<br>
+df$leafarea[df$chamber=="C09"]<- 17.33770004<br>
+df$leafarea[df$chamber=="C10"]<- 17.13905693<br>
+df$leafarea[df$chamber=="C11"]<- 9.63132978<br>
+df$leafarea[df$chamber=="C12"]<- 27.27409398<br>
+df$LACM<-df$leafarea / 10000<br>
+
+#wi is the leaf intercellular vapour concentration (mol water vapour/mol moist air)<br>
+#using Licor eqn  mole fraction of water vapor within the leaf, mmol H2O mol air-1.<br>
+df["Ei"]<-6.13753*exp(df$leaftemp*((18.564-(df$leaftemp/254.4)))/(df$leaftemp+255.57))<br>
+df$wi<-df$Ei / df$AIRPRESS_mean/10  #mol mol -1<br>
+##make E a flux relative to tree lef area<br>
+df$Emmol<-df$E*1000 #go to mmol<br>
+df$Eleaf<-df$Emmol/df$leafarea ; plot(df$Eleaf) #(mmol H2O m-2 s-1)<br>
+
+##Calculate VPD - good to use the plant ecophys package here <br>
+df$esat<-esat(TdegC=df$Tair_al_mean, Pa = 101)<br>
+df$vpd<-RHtoVPD(RH=df$RH_al_mean, TdegC=df$Tair_al_mean, Pa = 101) ; plot(df$vpd);summary(df$vpd) #the vapour pressure deficit of the chamber airspace (kPa)<br>
+
+##Calculate gt -gt is total conductance to water vapour through the stomata and leaf boundary layer<br>
+df$gs<-df$Eleaf/df$vpd/10 # mol<br>
+
+##Calculate Leaf Water Residence Times##<br>
+df$W<- 12 #mol m-2<br>
+df$t<-df$W/(df$gs*df$wi) # in seconds<br>
+df$tm<-df$t/60 ;mean(df$tm, na.rm=TRUE);min(df$tm, na.rm=TRUE);max(df$tm, na.rm=TRUE) # T in mins<br>
+df$th<-df$t/3600 ;mean(df$th, na.rm=TRUE);min(df$th, na.rm=TRUE);max(df$th, na.rm=TRUE) # T in hour<br>
+###Calculate for isotopes<br>
+df$ek=0.027<br>
+df$alphak<-1+df$ek<br>
+df["Eplus"]<-2.644-(3.206*((10^3)/(df$Tair_al_mean+273.16)))+(1.534*((10^6)/((df$Tair_al_mean+273.16)^2)))<br>
+df$betaplus<-(df$Eplus/1000)+ 1<br>
+mean(df$alphak*df$betaplus)<br>
+df$p<-1.2 ##See SI from MS<br>
+##df$alphak*df$betaplus shold be around 1.040 (Table 1 Grahams and Lucas paper)<br>
+df$tiso<-(df$W*df$alphak*df$betaplus)/(df$p*df$gs*df$wi)<br>
+df$tmiso<-df$tiso/60 ;mean(df$tmiso, na.rm=TRUE);min(df$tmiso, na.rm=TRUE);max(df$tmiso, na.rm=TRUE) # T in mins<br>
+df$thiso<-df$tiso/3600 ;mean(df$thiso, na.rm=TRUE);min(df$thiso, na.rm=TRUE);max(df$thiso, na.rm=TRUE)<br>
+
+###calculate number obsertavtions of dtrans within 2 mil<br>
+df$range<-ifelse(df$dtrans  >= -5.28 & df$dtrans <= -1.28, "within", "not");df$range<-as.factor(df$range)<br>
+summary(df$range) # 107 not in 264 within = 367 total % witin 2 % is 258 /367<br>
+264/(264+107)<br>
+
+##The following script defines when chamber air temp and chamber dew point temp are within 1C or negative<br>
+#We need to figure out if Dew Point deltas could be influecing gs and make a new colum which says if points are within<br>
+df$dpdiffwtc<-df$Tair_al-df$DewPntC;df$dpdiffwtc<br>
+df$rangewtc<-ifelse(df$dpdiffwtc  >= -1000000 & df$dpdiffwtc<= 1, "not", "within");df$rangewtc<-as.factor(df$rangewtc)<br>
+summary(df$rangewtc) # 80 not in 520 within <br>
+
+#Count how many data points are comprimised from each treatment<br>
+sub<- df[df$trt == "ambient",] ;summary(sub$rangewtc) # 80 outisde out of 220 ambineto observatins or 36 % <br>
+subx<- df[df$trt == "elevated ",] ;summary(subx$rangewtc) # 0 <br>
+
+#We add a filter to define if it is day time or not and make data frames accoringly<br>
+df$sun<- ifelse(df$PAR >=0.01, "day", "night")<br>
+dfsun<-filter(df, df$sun == "day")<br>
+dfnight<-filter(df, df$sun == "night")<br>
+
+from here we get the daytime means <br>
+summaryBy(.~trt+Camp,FUN=c(mean,sd),keep.names=T,data=dfsunmean,na.rm=TRUE);max(dfsun$dtrans,na.rm=TRUE)<br>
+and finnaly i create a new dataframe to go and graph<br>
+
+dfa<-df ##I make dfa to use in the code which makes Figures 2,3 and 4- These scripts will cal for WTC4 Ispflux model to be run<br>
 
 
