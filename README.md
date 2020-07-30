@@ -91,5 +91,5 @@ a<-ggplot(data = d2, aes(x = d, y = m, fill = z, z = z)) +  <br>
   theme(plot.title = element_text(size = 20, face = "bold")) <br>
 
 a
-https://github.com/RichardHarwood/Whole-Tree-Isoflux/blob/master/figure%202a%20github.tiff
+![](github%20images/Fig2aeg.png)
 
