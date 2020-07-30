@@ -90,5 +90,6 @@ a<-ggplot(data = d2, aes(x = d, y = m, fill = z, z = z)) +  <br>
   guides(fill=guide_colourbar(barwdith=0.5, barheight =18, nbin=100)) + <br>
   theme(plot.title = element_text(size = 20, face = "bold")) <br>
 
+![](Fig2aeg.png)
 
 
