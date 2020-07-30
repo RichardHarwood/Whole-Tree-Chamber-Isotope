@@ -3,20 +3,20 @@ Code to reproduce Whole Tree Isoflux
 The steps to recreate WTC4.
 
 Step 1 Create Figure 2 - This involves exploring temporal data it uses 2 data frames (a water vapour oxygen isotope one (from the LGR) and a gas exchange one from WSU 
-(portions of these dataframes are later macthed with wind and rain data to run stats)
+(portions of these dataframes are later macthed with wind and rain data to run stats) <br>
 
-Each Panel of Figure 2 is created individually - but the process is more or less the same:
-#Load Packages
-require(lubridate);require(ggplot2);require(xts);require(dplyr);require(grid);require(cowplot);require(reshape2)
-require(plantecophys);require(akima);require(fields);require(tripack);require(autoimage)# Load Packages
-#Load Data
-googledriveWTC4ISOTOPEID <- "1RNzYApcCO1D1sr_mVQgQVSQFIWNWlqVm"
-df<- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", googledriveWTC4ISOTOPEID)) #
-###Set data as time and assign set differnt simmaries e.g months weeks weeks and hour days etc:
-df["Td"]<-(dmy_hm(df$stime, quiet=TRUE, tz="UTC"));summary(df$Td)
-df$date <- as.Date(df$Td, format = "%Y-%m-%d") ; summary(df$date); str(df$date)
-df["month"]<-format(df$Td,"%m");str(df$month)
-df$hm <- format(df$Td, "%H") ; summary(df$hm)
+Each Panel of Figure 2 is created individually - but the process is more or less the same: <br>
+#Load Packages <br>
+require(lubridate);require(ggplot2);require(xts);require(dplyr);require(grid);require(cowplot);require(reshape2) <br>
+require(plantecophys);require(akima);require(fields);require(tripack);require(autoimage)# Load Packages <br>
+#Load Data <br>
+googledriveWTC4ISOTOPEID <- "1RNzYApcCO1D1sr_mVQgQVSQFIWNWlqVm" <br>
+df<- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", googledriveWTC4ISOTOPEID)) # <br>
+###Set data as time and assign set differnt simmaries e.g months weeks weeks and hour days etc: <br>
+df["Td"]<-(dmy_hm(df$stime, quiet=TRUE, tz="UTC"));summary(df$Td) <br>
+df$date <- as.Date(df$Td, format = "%Y-%m-%d") ; summary(df$date); str(df$date) <br>
+df["month"]<-format(df$Td,"%m");str(df$month) <br>
+df$hm <- format(df$Td, "%H") ; summary(df$hm) <br>
 df["week"]<-strftime(df$Td,format="%W",tz="UTC");str(df$week)
 ########################Extract flux data relevant to isotope
 start<-ymd_hms("2016-08-28 12:00:00 UTC");summary(start)
