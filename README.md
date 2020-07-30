@@ -224,4 +224,87 @@ and finnaly i create a new dataframe to go and graph<br>
 
 dfa<-df ##I make dfa to use in the code which makes Figures 2,3 and 4- These scripts will cal for WTC4 Ispflux model to be run<br>
 
+if the above model is run and we have dfa in the global environment we can make all neccasry panels:<br>
+For example here is the temperture code:<br>
+
+wtc<-dfa<br>
+Cw<-wtc<br>
+Cw<-subset(Cw, Camp== 1)<br>
+colnames(Cw)<br>
+Cw <- Cw[,c("rangewtc","Tdh","chamber","trt","Tair_al_mean")]<br>
+Trtmean<- summaryBy(.~Tdh+trt+rangewtc,FUN=c(mean),keep.names=T,data=Cw)<br>
+#Trtmean<-filter(Trtmean, !grepl('<NA>', trt ));str(Trtmean)<br>
+se <- function(x) sqrt(var(x)/length(x))<br>
+Trtsd<- summaryBy(.~Tdh+trt+rangewtc,FUN=c(se),keep.names=T,data=Cw)<br>
+data<-cbind(Trtmean,Trtsd);data<-as.data.frame(data)<br>
+
+data['Time']<-(dmy_hm(data$Tdh, quiet=TRUE, tz="UTC"));str(data)<br>
+
+#######################<br>
+Cwx<-wtc<br>
+Cwx<-subset(Cwx, Camp== 3)<br>
+Cwx <- Cwx[,c("rangewtc","Tdh","chamber","trt","Tair_al_mean")]<br>
+Trtmeanx<- summaryBy(.~Tdh+trt+rangewtc,FUN=c(mean),keep.names=T,data=Cwx)<br>
+#Trtmeanx<-filter(Trtmeanx, !grepl('<NA>', trt ))<br><br>
+se <- function(x) sqrt(var(x)/length(x))<br><br>
+Trtsdx<- summaryBy(.~Tdh+trt+rangewtc,FUN=c(se),keep.names=T,data=Cwx)<br><br>
+data2<-cbind(Trtmeanx,Trtsdx);data2<-as.data.frame(data2)<br>
+
+data2['Time']<-(dmy_hm(data2$Tdh, quiet=TRUE, tz="UTC"));str(data)<br>
+
+start = as.POSIXct('2016-10-24 19:00:00"', tz="UTC") <br>
+end = as.POSIXct('2016-10-25 07:00:00', tz="UTC")<br>
+
+start2 = as.POSIXct('2016-11-20 19:00:00"', tz="UTC") <br>
+end2 = as.POSIXct('2016-11-21 07:00:00', tz="UTC")<br>
+
+str(rects)<br>
+str(data$Time)<br>
+
+
+t1<-ggplot(data=data, aes(x=Time, y=Tair_al_mean))+<br>
+  geom_point(aes(colour=trt, shape=trt), size=3.5,)+ <br>
+  annotate("rect", fill = "black", alpha = 0.15, <br>
+           xmin = end, xmax = start,<br>
+           ymin = -Inf, ymax = Inf)+<br>
+  
+  scale_color_manual(name="Legend:",labels = c("Transpired Ambient Chamber", "Transpired Elevated Chamber"),values = c("black", "red"))+<br>
+  scale_shape_manual(name="Legend:",labels = c("in", "out" ),values = c(16,16))+<br>
+  geom_errorbar(aes(ymin=Tair_al_mean-Tair_al_mean.1, ymax=Tair_al_mean+Tair_al_mean.1), width=.2,<br>
+                position=position_dodge(.9))+<br>
+  labs(y="", x = "",element_text(size = 6))+<br>
+  # scale_x_datetime(breaks = scales::pretty_breaks(n = 12))<br>
+  theme_classic()+theme(panel.border = element_rect(fill = "NA", colour = "black", size = 2))+<br>
+  ggtitle("")+ theme(legend.position = "none")+<br>
+  scale_y_continuous ( breaks=scales::pretty_breaks(n=5),<br>
+                       limits = c(0, 40))+<br>
+  theme(axis.text.y = element_text( color="black", size=25))+<br>
+  theme(axis.text.x = element_text( color="black", size=16, angle=45, hjust=1 , vjust=1))<br>
+
+
+t3<-ggplot(data=data2, aes(x=Time, y=Tair_al_mean))+<br>
+  geom_point(aes(colour=trt, shape=rangewtc), size=3.5,)+ <br>
+  annotate("rect", fill = "black", alpha = 0.15, <br>
+           xmin = end2, xmax = start2,<br>
+           ymin = -Inf, ymax = Inf)+<br>
+  
+  scale_color_manual(name="Legend:",labels = c("Transpired Ambient Chamber", "Transpired Elevated Chamber"),values = c("black", "red"))+<br>
+  scale_shape_manual(name="Legend:",labels = c("in", "out" ),values = c(16,16))+<br>
+  geom_errorbar(aes(ymin=Tair_al_mean-Tair_al_mean.1, ymax=Tair_al_mean+Tair_al_mean.1), width=.2,<br>
+                position=position_dodge(.9))+<br>
+  labs(y="", x = "",element_text(size = 6))+<br>
+  # scale_x_datetime(breaks = scales::pretty_breaks(n = 12))<br>
+  theme_classic()+theme(panel.border = element_rect(fill = "NA", colour = "black", size = 2))+<br>
+  ggtitle("")+ theme(legend.position = "none")+<br>
+  scale_y_continuous ( breaks=scales::pretty_breaks(n=5),<br>
+                       limits = c(0, 40))+<br>
+  theme(axis.text.y = element_text( color="black", size=25))+<br>
+  theme(axis.text.x = element_text( color="black", size=16, angle=45, hjust=1 , vjust=1))<br>
+  
+  here is t1 (which stands for temp - campiagn 1)
+  ![](tempeg.png)
+  each varible (temp , gs , Eleaf etc has its own script and then they are merged using cowplot::plot_grid) <br>
+
+
+
 
