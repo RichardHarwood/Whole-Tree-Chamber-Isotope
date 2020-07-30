@@ -303,7 +303,7 @@ t3<-ggplot(data=data2, aes(x=Time, y=Tair_al_mean))+<br>
   here is t1 (which stands for temp - campiagn 1)
   ![](tempeg.png)
   each varible (temp , gs , Eleaf etc has its own script and then they are merged using cowplot::plot_grid) <br>
-  figure s4 is slightly different in that it uses facet wrap on the chambers to produce the plots. 
+  figure s4 is slightly different in that it uses facet wrap on the chambers to produce the plots.<br> 
 
 
 
