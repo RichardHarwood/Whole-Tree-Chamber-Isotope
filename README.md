@@ -127,6 +127,155 @@ ggplot(data = d2, aes(x = d, y = m, fill = z, z = z)) +
  
   ![Screenshot](  Images/Fig2A.png)
 
+# Figure 3
+The next figure uses campaign data. Firstly I calculate the 18O of transpiration via mass balance along with some other calculations- all scripts use the same packages.
+
+Load the campaign data 
+```r
+googledriveWTC4ISOTOPEIDCAMPAIGNDATA <- "1_K_m1eq-iQGQmOC3hqoI7_8qxVve3YoB"
+df<- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", googledriveWTC4ISOTOPEIDCAMPAIGNDATA))
+```
+define source water 
+```r
+df["source"]=-3.28 ##from branch water
+```
+Next I define chamber terms to match WTC notation 
+```r
+F=df$Fwat_mean #F is the flow of water vapour into the chamber (mol s-1), 
+V=df$Vwat_mean #V is the venting of water vapour out of the chamber (mol s-1), 
+C=df$CONDH2O_mean #C is the rate of water removal from the chamber air by the condenser (mol s-1); 
+S=df$deltaH2O_mean #S is the change in storage of water vapour in the chamber air from one time step to the next (mol s-1).
+```
+To calculate the mass balance we need to get the previous observation to create a storage term
+```r
+df=mutate(df, d18O.corrected_WV_PREVIOUS = lag(d18O.corrected_WV) )
+df=mutate(df, HWTCPREVIOUS = lag(HWTC_mean) )
+```
+The initial campaign data frame didnt have data before the first condensed water observation. Not the most effecient way to do things but I add these values in manually 
+
+```r
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C01"]<- -12.71529536
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C02"]<--12.5988649
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C03"]<--12.58412318
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C04"]<--11.9876596
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C05"]<--12.10632715
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C06"]<--11.94211656
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C07"]<--12.34622914
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C08"]<--12.39703311
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C09"]<--12.26416026
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C010"]<- -12.2405457
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C011"]<-  -12.46127815
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C012"]<-  -12.39354702
+
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C01"]<- -13.58086623
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C02"]<--12.94873974
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C03"]<--13.99566358
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C04"]<--13.44062848
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C05"]<--14.33404636
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C06"]<--12.82402649
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C07"]<--13.82670464
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C08"]<--13.04301391
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C09"]<--14.19239735
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C010"]<- -11.79007219
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C011"]<-  -14.09134636
+df$d18O.corrected_WV_PREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C012"]<-  -12.73815232
+
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C01"]<- 2088.881441
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C02"]<-2473.286808
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C03"]<-2089.415438
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C04"]<-2504.145883
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C05"]<-2085.775293
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C06"]<-2451.11
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C07"]<-2071.409
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C08"]<-2492.445
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C09"]<-2074.763
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C010"]<- 2464.934
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C011"]<-  2059.148
+df$HWTCPREVIOUS[df$Tdh=="24/10/2016 13:00" & df$chamber=="C012"]<- 2477.758
+
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C01"]<- 1354.630277
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C02"]<-1619.886557
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C03"]<-1365.072288
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C04"]<-1622.288884
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C05"]<-1283.044575
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C06"]<-1611.162
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C07"]<-1336.095
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C08"]<-1767.785
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C09"]<-1322.821
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C010"]<- 1609.709
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C011"]<- 1284.557
+df$HWTCPREVIOUS[df$Tdh=="20/11/2016 12:00" & df$chamber=="C012"]<-  1767.97
+```
+I can calculate the isotopic storage term
+```
+dwtc=df$d18O.corrected_WV
+dwtc1=df$d18O.corrected_WV_PREVIOUS
+wt1=df$HWTCPREVIOUS
+deltas=((wt*dwtc)-(wt1*dwtc1))/(wt-wt1)
+```
+and the H2O storage term 
+```r
+Scalculated=(((wt-wt1)/(Chamberpressure*1000))*(Chambervolume/22.4))*(1/3600)
+```
+and then transpiration 
+```r
+E=V-F+C+Scalculated
+df$E=E
+```
+the next step is to calculate delata E
+
+```r
+c=df$CONDH2O_mean
+deltav=df$d18O.corrected_WV
+deltaf=df$d18O.corrected_WV.AMB.
+deltac=df$d18O.corrected_Cond 
+de=((V*deltav)-(F*deltaf)+(C*deltac)+(Scalculated*deltas))/E
+df$dtrans=de
+```
+To better understand what the trees are doing some variables are better expressed on per leaf area basis 
+
+```
+df$leafarea[df$chamber=="C01"]<-23.62101328 #M^2
+df$leafarea[df$chamber=="C02"]<- 17.17025483
+df$leafarea[df$chamber=="C03"]<- 12.37672299
+df$leafarea[df$chamber=="C04"]<-24.62392584
+df$leafarea[df$chamber=="C05"]<- 12.92316481
+df$leafarea[df$chamber=="C06"]<-29.71035506
+df$leafarea[df$chamber=="C07"]<- 14.61233375
+df$leafarea[df$chamber=="C08"]<- 24.42841037
+df$leafarea[df$chamber=="C09"]<- 17.33770004
+df$leafarea[df$chamber=="C10"]<- 17.13905693
+df$leafarea[df$chamber=="C11"]<- 9.63132978
+df$leafarea[df$chamber=="C12"]<- 27.27409398
+df$LACM<-df$leafarea / 10000
+```
+Next I calculate the mole fraction of water vapour in the leaf 
+```r
+mole fraction of water vapor within the leaf, mmol H2O mol air-1.
+```
+and the leaf intercellular vapour concentration (mol water vapour/mol moist air)
+```r
+df$wi<-df$Ei / df$AIRPRESS_mean/10  #mol mol -1
+```
+Transpiration (E) is then expressed relative to leaf area 
+```r
+df$Emmol<-df$E*1000 #go to mmol
+df$Eleaf<-df$Emmol/df$leafarea ; plot(df$Eleaf) #(mmol H2O m-2 s-1)
+```
+Then using the plant ecophys package VPD is calculated 
+```r
+df$esat<-esat(TdegC=df$Tair_al_mean, Pa = 101)
+df$vpd<-RHtoVPD(RH=df$RH_al_mean, TdegC=df$Tair_al_mean, Pa = 101) ; plot(df$vpd);summary(df$vpd)
+```
+Then I calculate gt -gt is total conductance to water vapour through the stomata and leaf boundary layer
+```r
+df$gs<-df$Eleaf/df$vpd/10 # mol
+```
+
+
+
+
+
 
 
 
