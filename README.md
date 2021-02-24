@@ -5,7 +5,7 @@
 
 There are a number of .CSVs hosted on google drive - the R scripts will download them automatically. To recreate the analysis internet is needed. 
 
-Figure 2
+## Figure 2
 Figure 2 plots the the isotope composition, air temperature and VPD of the atmosphere, and ambient and eleveted chambers. To do this I interpolated between data points.
 The readme will show one example (Figure 2, Panel A) the "Figure 2.R" file will recreate teh whole plot
 ## Steps
@@ -376,6 +376,14 @@ ggplot(data=data, aes(x=Time, y=Tair_al_mean))+
   theme(plot.title = element_text(size = 40, face = "bold"))
 ```
 ![Screenshot](  Images/Fig3A.png)
+
+## Figure 4
+Figure 4 is made the same way as figure 3. The code to recreate this figure is "Figure4.R". 
+## Figure 5
+Figure 5 is made the same way as figure 3. The code to recreate this figure is "Figure5.R". 
+## Figure 6
+Figure 6 brings in assimilation wieghted values, growth data and cellulose data. The methods are as follows:
+
 
 
 
