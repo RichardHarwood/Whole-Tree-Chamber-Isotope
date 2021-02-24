@@ -123,6 +123,8 @@ ggplot(data = d2, aes(x = d, y = m, fill = z, z = z)) +
   annotation_custom(c1, xmin=23.7, xmax=23,ymin=55.5, ymax=56.5) +
   annotation_custom(c2, xmin=23.7, xmax=23,ymin=82.5, ymax=83.5) 
   ```
+  Finally, here is what the code produces. The other panels just involve changing treatment (eg ambient of elevated) or variable (eg Temperature or VPD)
+ 
   ![Screenshot](  Images/Fig2A.png)
 
 
