@@ -356,11 +356,24 @@ end2 = as.POSIXct('2016-11-21 05:30:00', tz="UTC")
 Again the data is visulaised in ggplot, here is the code to make the plot 
 
 ```r
-#change to bom first and last light
-start = as.POSIXct('2016-10-24 19:00:00"', tz="UTC") 
-end = as.POSIXct('2016-10-25 05:30:00', tz="UTC")
-start2 = as.POSIXct('2016-11-20 19:00:00"', tz="UTC") 
-end2 = as.POSIXct('2016-11-21 05:30:00', tz="UTC")
+ggplot(data=data, aes(x=Time, y=Tair_al_mean))+
+  geom_point(aes(colour=trt, shape=trt), size=5,)+ 
+  annotate("rect", fill = "black", alpha = 0.15, 
+           xmin = end, xmax = start,
+           ymin = -Inf, ymax = Inf)+
+  scale_color_manual(name="Legend:",labels = c("Transpired Ambient Chamber", "Transpired Elevated Chamber"),values = c("black", "red"))+
+  scale_shape_manual(name="Legend:",labels = c("in", "out" ),values = c(16,16))+
+  geom_errorbar(aes(ymin=Tair_al_mean-Tair_al_mean.1, ymax=Tair_al_mean+Tair_al_mean.1), width=.2,
+                position=position_dodge(.9))+
+  labs(y="Temperature (°C)", x = "",element_text(size = 6))+
+  theme_classic()+theme(panel.border = element_rect(fill = "NA", colour = "black", size = 2))+
+  ggtitle("(a)")+ theme(legend.position = "none")+
+  scale_y_continuous ( breaks=scales::pretty_breaks(n=5),
+                       limits = c(0, 40))+
+  theme(axis.text.y = element_text( color="black", size=30))+
+  theme(axis.text.x = element_text( color="black", size=20, angle=45, hjust=1 , vjust=1))+
+  theme(axis.title.y = element_text(color="black", size=45))+ 
+  theme(plot.title = element_text(size = 40, face = "bold"))
 ```
 ![Screenshot](  Images/Fig3A.png)
 
