@@ -305,7 +305,7 @@ dfsun<-filter(df, df$sun == "day")
 dfnight<-filter(df, df$sun == "night")
 dfsun<-subset(dfsun, dtrans >-8 & dtrans<2) ## this just removes a few absurd values
 ```
-create a new dataset of daytime values and get daytime means
+create a new dataset of daytime values and get daytime means (this forms table 1)
 ```r
 dfsunmean<-dfsun[,c("trt","Camp","d18O.corrected_WV","d18O.corrected_WV.AMB.","dtrans" )]
 summaryBy(.~trt+Camp,FUN=c(mean,sd),keep.names=T,data=dfsunmean,na.rm=TRUE);max(dfsun$dtrans,na.rm=TRUE)
@@ -327,6 +327,44 @@ evapSS=((1+eplus/1000)*((1+ek/1000)*(1+-3.28/1000)*(1-eai)+eai*(1+dw/1000))-1)*1
 df$evapObs=evapObs
 df$evapSS=evapSS
 ```
+
+#Plotting figure 3
+the "df" data frame now has all the infromation we need to run analysis. before ploting etc icreate a duplicate data frame "dfa"
+```r
+dfa<-df 
+```
+For figure 3 I will illustrate Panel a in the readme - the full code is in "Figure3.R"
+I start by subsetting to campaign 1, creating a subset dataframe, calculating the mean and standard error and setting a time class
+```r
+Cw<-wtc
+Cw<-subset(Cw, Camp== 1)
+Cw <- Cw[,c("rangewtc","Tdh","chamber","trt","Tair_al_mean")]
+Trtmean<- summaryBy(.~Tdh+trt+rangewtc,FUN=c(mean),keep.names=T,data=Cw)
+se <- function(x) sqrt(var(x)/length(x))
+Trtsd<- summaryBy(.~Tdh+trt+rangewtc,FUN=c(se),keep.names=T,data=Cw)
+data<-cbind(Trtmean,Trtsd);data<-as.data.frame(data)
+data['Time']<-(dmy_hm(data$Tdh, quiet=TRUE, tz="UTC"));str(data)
+```
+I then define the times at which the panel will be shaded
+```r
+#change to bom first and last light
+start = as.POSIXct('2016-10-24 19:00:00"', tz="UTC") 
+end = as.POSIXct('2016-10-25 05:30:00', tz="UTC")
+start2 = as.POSIXct('2016-11-20 19:00:00"', tz="UTC") 
+end2 = as.POSIXct('2016-11-21 05:30:00', tz="UTC")
+```
+Again the data is visulaised in ggplot, here is the code to make the plot 
+
+```r
+#change to bom first and last light
+start = as.POSIXct('2016-10-24 19:00:00"', tz="UTC") 
+end = as.POSIXct('2016-10-25 05:30:00', tz="UTC")
+start2 = as.POSIXct('2016-11-20 19:00:00"', tz="UTC") 
+end2 = as.POSIXct('2016-11-21 05:30:00', tz="UTC")
+```
+![Screenshot](  Images/Fig3A.png)
+
+
 
 
 
