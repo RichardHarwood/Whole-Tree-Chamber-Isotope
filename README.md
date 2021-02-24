@@ -271,6 +271,63 @@ Then I calculate gt -gt is total conductance to water vapour through the stomata
 ```r
 df$gs<-df$Eleaf/df$vpd/10 # mol
 ```
+Next I calculate leaf water turonover time 
+```r
+##Calculate Leaf Water Residence Times##
+df$W<- 12 #mol m-2
+df$t<-df$W/(df$gs*df$wi) # in seconds
+df$tm<-df$t/60 ;mean(df$tm, na.rm=TRUE);min(df$tm, na.rm=TRUE);max(df$tm, na.rm=TRUE) # T in mins
+df$th<-df$t/3600 ;mean(df$th, na.rm=TRUE);min(df$th, na.rm=TRUE);max(df$th, na.rm=TRUE) # T in hour
+###Calculate for isotopes
+df$ek=0.027
+df$alphak<-1+df$ek
+df["Eplus"]<-2.644-(3.206*((10^3)/(df$Tair_al_mean+273.16)))+(1.534*((10^6)/((df$Tair_al_mean+273.16)^2)))
+df$betaplus<-(df$Eplus/1000)+ 1
+mean(df$alphak*df$betaplus)
+df$p<-1.2 ##See SI from MS
+##df$alphak*df$betaplus shold be around 1.040 (Table 1 Grahams and Lucas paper)
+df$tiso<-(df$W*df$alphak*df$betaplus)/(df$p*df$gs*df$wi)
+df$tmiso<-df$tiso/60 ;mean(df$tmiso, na.rm=TRUE);min(df$tmiso, na.rm=TRUE);max(df$tmiso, na.rm=TRUE) # T in mins
+df$thiso<-df$tiso/3600 ;mean(df$thiso, na.rm=TRUE);min(df$thiso, na.rm=TRUE);max(df$thiso, na.rm=TRUE)
+```
+I then idenitfy air temp and chamber dew point temp are within 1C or negative 
+```r
+df$dpdiffwtc<-df$Tair_al-df$DewPntC;df$dpdiffwtc 
+df$rangewtc<-ifelse(df$dpdiffwtc  >= -1000000 & df$dpdiffwtc<= 1, "not", "within");df$rangewtc<-as.factor(df$rangewtc) 
+summary(df$rangewtc)
+```
+the summary tells us that 80 values are with 1C or negative.
+Next I extract day time values
+
+```r
+df$sun<- ifelse(df$PAR >=0.01, "day", "night")
+dfsun<-filter(df, df$sun == "day")
+dfnight<-filter(df, df$sun == "night")
+dfsun<-subset(dfsun, dtrans >-8 & dtrans<2) ## this just removes a few absurd values
+```
+create a new dataset of daytime values and get daytime means
+```r
+dfsunmean<-dfsun[,c("trt","Camp","d18O.corrected_WV","d18O.corrected_WV.AMB.","dtrans" )]
+summaryBy(.~trt+Camp,FUN=c(mean,sd),keep.names=T,data=dfsunmean,na.rm=TRUE);max(dfsun$dtrans,na.rm=TRUE)
+```
+The last step before plotting the data is to calculate isotope composition at the site of evaporation for steady state and non steady state
+
+```r
+de=df$dtrans
+dw=df$d18O.corrected_WV
+df$ek=27
+ek=df$ek
+eplus=df$Eplus
+ea=df$HWTC_mean/1000
+eai=ea/df$ei
+#Using obsersred d180trans
+evapObs=((1+eplus/1000)*((1+ek/1000)*(1+de/1000)*(1-eai)+eai*(1+dw/1000))-1)*1000
+#using -3.21 (source water) for d180trans
+evapSS=((1+eplus/1000)*((1+ek/1000)*(1+-3.28/1000)*(1-eai)+eai*(1+dw/1000))-1)*1000
+df$evapObs=evapObs
+df$evapSS=evapSS
+```
+
 
 
 
