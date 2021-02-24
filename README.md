@@ -384,8 +384,22 @@ Figure 5 is made the same way as figure 3. The code to recreate this figure is "
 ## Figure 6
 Figure 6 brings in assimilation wieghted values, growth data and cellulose data. The methods are as follows:
 
+Firstly we bring in the growth data, again this is hosted on google drive and has cellulose data matched
+```R
+dfPEX<- read.csv("PEXMASS.csv")
+dfPEX$id <- paste(dfPEX$T_treatment.x,dfPEX$END.Date);dfPEXid<-as.factor(dfPEX$id);str(dfPEX$id)
+```
+I then bring in a data frame with assimilation weighted values with cellulose data 
+```r
+googledriveWTC4ASWID <- "1Aq-2eFUC8xZHyacd88ePAhAwzfK4anCE"
+dfcel<- read.csv(sprintf("https://docs.google.com/uc?id=%s&export=download", googledriveWTC4ASWID))
+```
+The code to get assimilation weighted values can be found here 
+https://github.com/jedrake?tab=repositories
 
+Again, the plots here are the same as previous figures, the full code is in "Figure 6.R".
 
+#SI
 
 
 
