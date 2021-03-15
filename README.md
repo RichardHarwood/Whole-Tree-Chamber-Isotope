@@ -251,7 +251,7 @@ df$LACM<-df$leafarea / 10000
 ```
 Next I calculate the mole fraction of water vapour in the leaf 
 ```r
-mole fraction of water vapor within the leaf, mmol H2O mol air-1.
+df["Ei"]<-6.13753*exp(df$leaftemp*((18.564-(df$leaftemp/254.4)))/(df$leaftemp+255.57))
 ```
 and the leaf intercellular vapour concentration (mol water vapour/mol moist air)
 ```r
